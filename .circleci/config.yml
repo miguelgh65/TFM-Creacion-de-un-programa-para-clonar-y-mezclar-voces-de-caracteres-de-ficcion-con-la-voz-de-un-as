@@ -1,0 +1,41 @@
+version: 2.1
+orbs:
+  codecov: codecov/codecov@1.2.5
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Add folder permissions
+          command: sudo chown -R circleci:circleci /usr/local/bin && sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
+      - run:
+          name: Install os libraries
+          command: sudo apt-get install -y ffmpeg libsndfile1
+      - restore_cache:
+          key: deps-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CACHE_VERSION }}
+      - run:
+          name: Install dependencies
+          command: sudo pip install -r requirements-cpu.txt
+      - run:
+          name: Install additional tools
+          command: sudo pip install pytest==6.2.2 gdown==4.4.0 pytest-cov==2.12.1 interrogate==1.4.0
+      - run:
+          name: Download resources
+          command: gdown https://drive.google.com/uc?id=1CJpYcwoQ9zNA8f9gLpNxEijT9yKTqdcT && unzip test_samples.zip -d test_samples && ls test_samples/
+      - save_cache:
+          key: deps-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CACHE_VERSION }}
+          paths:
+            - "/usr/local/bin"
+            - "/usr/local/lib/python3.6/site-packages"
+      - run:
+          name: Tests
+          command: pytest --cov=./ --cov-config=.coveragerc --durations=5
+      - codecov/upload
+      - run:
+          name: Comment coverage
+          command: mkdir /tmp/badges && interrogate -c pyproject.toml --generate-badge "/tmp/badges/comment.svg"
+      - store_artifacts:
+          path: /tmp/badges

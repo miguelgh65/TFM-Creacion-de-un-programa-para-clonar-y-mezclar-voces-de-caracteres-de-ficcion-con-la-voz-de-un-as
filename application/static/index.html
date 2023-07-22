@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='pane.js') }}"></script>
+{% endblock %}
+{% block content %}
+<form method="POST" action="/" enctype="multipart/form-data">
+    {% if datasets %}
+        <div class="tab">
+            <button class="tablinks active" onclick="openPane(event, 'new')">New dataset</button>
+            <button class="tablinks" onclick="openPane(event, 'extend')">Extend existing dataset</button>
+        </div>
+        <br>
+
+        <div id="new" class="tabcontent" style="display: block;">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name"> 
+            </div>
+        </div>
+        
+        <div id="extend" class="tabcontent">
+            <div class="form-group">
+                <select class="form-control" id="dataset" name="dataset">
+                    {% for dataset in datasets %}
+                        <option value="{{dataset}}">{{dataset}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    {% else %}
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required> 
+        </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label for="text_file"><a href="#" data-toggle="tooltip" data-placement="top" title="File which labels what is said in the audio. Can either be .txt (plain text) or .srt (subtitle)">Text</a></label>
+        <input type="file" id="text_file" name="text_file" required> 
+    </div>
+    <div class="form-group">
+        <label for="audio_file"><a href="#" data-toggle="tooltip" data-placement="top" title="Source audio to extract. Supports audio & video files. Ensure audio is clear and matches your text file">Audio</a></label>
+        <input type="file" id="audio_file" name="audio_file" required> 
+    </div>
+    <div class="form-group">
+        <label for="language">Language <a href="/settings">Add more</a></label>
+        <select class="form-control" id="language" name="language" onchange="selectLanguage()" required>
+            {% for language, enabled in languages.items() %}
+                <option value="{{language}}" {% if not enabled %}disabled{% endif %}>{{language}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="button" class="collapsible" id="advanced">Advanced Options ∨</button>
+    <div class="content">
+        <br>
+        <div class="form-group">
+            <input type="range" id="confidence" name="confidence" step="0.05" min="0.5" max="0.95" value="0.85" onchange="showConfidenceLabel()">
+            <label for="confidence">
+                <a href="#" data-toggle="tooltip" data-placement="top" title="Decreasing minimum confidence will increase data but will likely decrease the quality of that data">Minimum confidence: </a> 
+                <span id="confidence_label"></span>
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="min_length"><a href="#" data-toggle="tooltip" data-placement="top" title="Minimum and maximum clip length in seconds">Clip length</a></label>
+            <input type="number" id="min_length" name="min_length" value="1" step=".1" required> 
+            -
+            <input type="number" id="max_length" name="max_length" value="10" step=".1" required>
+        </div>
+        <div class="form-group">
+            <input type="checkbox" id="combine_clips" name="combine_clips" checked>
+            <label for="combine_clips"><a href="#" data-toggle="tooltip" data-placement="top" title="Combine short clips to produce longer ones where possible">Combine clips</a></label>
+        </div>
+    </div>
+    <br>
+    <input type="submit" class="btn btn-primary">
+</form>
+<script src="{{ url_for('static', filename='advanced.js') }}"></script>
+<script src="{{ url_for('static', filename='dataset.js') }}"></script>
+{% endblock %}
